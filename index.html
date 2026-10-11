@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECE Smart Ticker & Dept Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: #070b19; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+
+        #welcome-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1e1b4b 0%, #070b19 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; animation: fadeOut 1s ease 2.5s forwards;
+        }
+        #welcome-screen h1 {
+            font-size: 2.8rem; font-weight: 800; background: linear-gradient(45deg, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(56, 189, 248, 0.3);
+            animation: popIn 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            text-align: center; padding: 0 20px;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        .container { width: 100%; max-width: 900px; padding: 30px 20px; display: flex; flex-direction: column; gap: 25px; margin-top: 10px; }
+
+        .header-card {
+            background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+            padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        .header-title h2 { font-size: 1.8rem; color: #38bdf8; font-weight: 700; }
+        .header-title p { font-size: 0.9rem; color: #94a3b8; }
+        
+        .status-badge {
+            display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.8);
+            padding: 8px 16px; border-radius: 50px; border: 1px solid #334155; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+        }
+        .status-badge:hover { border-color: #38bdf8; }
+        .dot { width: 10px; height: 10px; background: #eab308; border-radius: 50%; box-shadow: 0 0 10px #eab308; } /* Yellow = Unknown/Not Tested */
+        .dot.online { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .dot.offline { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .cat-card {
+            background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.05);
+            padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+            text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .cat-card:hover { transform: translateY(-5px); border-color: #38bdf8; background: rgba(30, 41, 59, 0.8); }
+        .cat-card h3 { font-size: 1rem; color: #38bdf8; margin-bottom: 5px; }
+        .cat-card p { font-size: 0.8rem; color: #94a3b8; }
+
+        .control-panel {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .control-panel h3 { margin-bottom: 15px; font-size: 1.3rem; color: #f8fafc; }
+        
+        .input-group { display: flex; gap: 12px; }
+        input[type="text"] {
+            flex: 1; background: #070b19; border: 1px solid #334155; padding: 14px 20px;
+            border-radius: 10px; color: white; font-size: 1rem; outline: none; transition: border 0.3s;
+        }
+        input[type="text"]:focus { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+        
+        button {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none;
+            padding: 14px 25px; border-radius: 10px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(2, 132, 199, 0.4);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(2, 132, 199, 0.6); }
+
+        #statusText { margin-top: 15px; font-size: 0.9rem; color: #34d399; font-weight: 500; }
+        #statusText.error { color: #ef4444; }
+
+        footer {
+            margin-top: auto; padding: 25px; text-align: center; width: 100%;
+            font-size: 0.85rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(7, 11, 25, 0.9);
+        }
+        footer span { color: #38bdf8; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen">
+        <h1>Welcome to ECE Department</h1>
+    </div>
+
+    <div class="container">
+        <div class="header-card">
+            <div class="header-title">
+                <h2>ECE Smart Ticker</h2>
+                <p>PVKKIT Department Control Hub</p>
+            </div>
+            <!-- Status Badge click cheste connection check avtundi -->
+            <div class="status-badge" onclick="checkConnection()" title="Click to test connection">
+                <div id="statusDot" class="dot"></div>
+                <span id="espStatus">Click to Check Status</span>
+            </div>
+        </div>
+
+        <div class="categories-grid">
+            <div class="cat-card" onclick="loadPreset('📢 URGENT: Dept Meeting at 2 PM')">
+                <h3>Announcements</h3>
+                <p>Load alert into editor</p>
+            </div>
+            <div class="cat-card" onclick="loadPreset('📅 Lab Practical starts on 15th')">
+                <h3>Lab Practical Dates</h3>
+                <p>Load schedule into editor</p>
+            </div>
+            <div class="cat-card" onclick="loadPreset('🎉 College Holiday on Friday')">
+                <h3>Holidays</h3>
+                <p>Load holiday into editor</p>
+            </div>
+            <div class="cat-card" onclick="loadPreset('⚡ Tech Symposium on Oct 25')">
+                <h3>Events</h3>
+                <p>Load event into editor</p>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h3>Custom Matrix Message Editor</h3>
+            <div class="input-group">
+                <input type="text" id="msgInput" placeholder="Select preset or type message, then click send...">
+                <button onclick="updateDisplay()">Push to Display</button>
+            </div>
+            <p id="statusText"></p>
+        </div>
+    </div>
+
+    <footer>
+        Designed & Developed with ❤️ by <span>RUSHI'S_36</span> | ECE Department
+    </footer>
+
+    <script>
+        const BIN_ID = "6acbc2dbac6210605a285693";
+        const API_KEY = "$2a$10$XXITYDBZRqTqYqOYXPFXY.X/WZxW575w.pMV5ZW0/nRzbA6YsnmQu";
+
+        // Default ga unknown state untundi (Yellow dot)
+        let isConnected = false;
+
+        async function checkConnection() {
+            let statusSpan = document.getElementById('espStatus');
+            let statusDot = document.getElementById('statusDot');
+            
+            statusSpan.innerText = "Checking Connection...";
+            statusDot.className = "dot"; // Yellow
+
+            try {
+                let response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                
+                if(response.ok) {
+                    isConnected = true;
+                    statusSpan.innerText = "Cloud Hub Connected ✅";
+                    statusDot.className = "dot online"; // Green
+                } else {
+                    throw new Error();
+                }
+            } catch(e) {
+                isConnected = false;
+                statusSpan.innerText = "ESP32 / Cloud Disconnected ❌";
+                statusDot.className = "dot offline"; // Red
+            }
+        }
+
+        function loadPreset(text) {
+            document.getElementById('msgInput').value = text;
+            let statusEl = document.getElementById('statusText');
+            statusEl.className = "";
+            statusEl.innerText = "Loaded into editor. Click 'Push to Display' to send.";
+        }
+
+        async function updateDisplay() {
+            let msg = document.getElementById('msgInput').value.trim();
+            let statusEl = document.getElementById('statusText');
+            
+            if(!msg) {
+                statusEl.className = "error";
+                statusEl.innerText = "Please enter or select a message first!";
+                return;
+            }
+
+            statusEl.className = "";
+            statusEl.innerText = "Validating and sending...";
+
+            try {
+                let response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({ message: msg })
+                });
+
+                if(response.ok) {
+                    isConnected = true;
+                    document.getElementById('espStatus').innerText = "Cloud Hub Connected ✅";
+                    document.getElementById('statusDot').className = "dot online";
+                    
+                    statusEl.className = "";
+                    statusEl.innerText = "Successfully Transmitted to Matrix! ✨";
+                    document.getElementById('msgInput').value = "";
+                } else {
+                    throw new Error();
+                }
+            } catch(error) {
+                isConnected = false;
+                document.getElementById('espStatus').innerText = "ESP32 Offline";
+                document.getElementById('statusDot').className = "dot offline";
+                
+                statusEl.className = "error";
+                statusEl.innerText = "Connect to ESP32 And Try Again ⚠️";
+            }
+        }
+    </script>
+</body>
+</html>
